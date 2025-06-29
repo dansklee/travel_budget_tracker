@@ -3,112 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Travel Budget Tracker - Portugal & France</title>
+  <title>Travel Budget Tracker</title>
 
-  <!-- React & Babel -->
+  <!-- React & ReactDOM -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel for JSX in-browser -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- Tailwind -->
+  <!-- TailwindCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    body {
-      margin: 0;
-      font-family:
-        -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-        sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-
-    /* PWA-like styling */
-    @media (max-width: 768px) {
-      .container {
-        padding: 0.5rem;
-      }
-    }
-
-    /* Custom scrollbar for mobile */
-    ::-webkit-scrollbar {
-      width: 4px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #f1f1f1;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 2px;
-    }
+    /* optional global styles */
+    body { margin:0; font-family:system-ui,sans-serif; }
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-thumb { background:#888; border-radius:2px; }
   </style>
 </head>
 <body>
+  <!-- React will mount here -->
   <div id="root"></div>
 
+  <!--
+    Paste your ENTIRE component code (all of those icon defs,
+    useState/useEffect logic, JSX, etc.) *and* the mount call
+    INTO this script block:
+  -->
   <script type="text/babel">
+    // ← start of your TravelBudgetTracker code
+
     const { useState, useEffect, useRef } = React;
 
-    // ——— Icon Components ———
-    const PlusCircle = ({ className = "h-5 w-5" }) => (
+    /* ——— ICONS ——— */
+    const PlusCircle = ({className="h-5 w-5"}) => (
       <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 8v8M8 12h8" />
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 8v8M8 12h8"/>
       </svg>
     );
-    const Trash2 = ({ className = "h-4 w-4" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <polyline points="3,6 5,6 21,6" />
-        <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2" />
-        <line x1="10" y1="11" x2="10" y2="17" />
-        <line x1="14" y1="11" x2="14" y2="17" />
-      </svg>
-    );
-    const Edit3 = ({ className = "h-4 w-4" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path d="M12 20h9" />
-        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-      </svg>
-    );
-    const MapPin = ({ className = "h-8 w-8" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-        <circle cx="12" cy="10" r="3" />
-      </svg>
-    );
-    const Download = ({ className = "h-4 w-4" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <polyline points="7,10 12,15 17,10" />
-        <line x1="12" y1="15" x2="12" y2="3" />
-      </svg>
-    );
-    const Upload = ({ className = "h-4 w-4" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <polyline points="17,8 12,3 7,8" />
-        <line x1="12" y1="3" x2="12" y2="15" />
-      </svg>
-    );
+    // … all your other icon components (Trash2, Edit3, MapPin, etc.) …
 
-    // ——— Main Component ———
+    /* ——— MAIN COMPONENT ——— */
     function TravelBudgetTracker() {
-      // … all of your state, effects, handlers, rendering code …
-      // (Copy exactly what you already have here)
-
+      // your useState, useEffect, handlers, JSX return, etc.
+      // copy exactly what you have in your local code.
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-          {/* … your full JSX layout … */}
-          <h1 className="text-3xl font-bold">Your tracker is here!</h1>
+          {/* … all your JSX … */}
         </div>
       );
     }
 
-    // ——— MOUNT IT ———
+    /* ——— MOUNT IT ——— */
     ReactDOM.createRoot(document.getElementById('root'))
       .render(<TravelBudgetTracker />);
+
+    // ← end of your code
   </script>
 </body>
 </html>
-
