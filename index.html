@@ -7,15 +7,15 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-6">
   <div id="root"></div>
-<script type="text/javascript">
-const { useState } = React;
+<script type="text/babel">
+const { useState, useEffect } = React;
 
 function TravelBudgetTracker() {
   const [expenses, setExpenses] = useState(() => {
-    // Load from localStorage if available, else start with demo row
     try {
       const data = localStorage.getItem('expenses');
       return data ? JSON.parse(data) : [];
@@ -24,12 +24,10 @@ function TravelBudgetTracker() {
     }
   });
 
-  // Persist expenses to localStorage on change
-  React.useEffect(() => {
+  useEffect(() => {
     localStorage.setItem('expenses', JSON.stringify(expenses));
   }, [expenses]);
 
-  // Add expense form
   const [form, setForm] = useState({
     memo: '', category: '', amount: '', date: '', payer: ''
   });
@@ -59,7 +57,6 @@ function TravelBudgetTracker() {
     setExpenses(expenses.filter(exp => exp.id !== id));
   }
 
-  // --- CSV Export ---
   function arrayToCSV(data) {
     if (!data.length) return '';
     const headers = Object.keys(data[0]);
