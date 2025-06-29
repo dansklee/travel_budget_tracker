@@ -457,6 +457,17 @@
                         React.createElement(Settings, { className: "h-5 w-5" }),
                         React.createElement('span', null, "Edit Budgets")
                     )
+                    // --- ADD THIS EXPORT BUTTON ---
+                    React.createElement('button', {
+                        onClick: exportToCSV,
+                        className: "bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors"
+                    },
+                        React.createElement('svg', { className: "h-5 w-5", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24", xmlns: "http://www.w3.org/2000/svg" },
+                            React.createElement('path', { d: "M12 5v14m7-7H5" })
+                        ),
+                        React.createElement('span', null, "Export CSV")
+                    )
+                    // --- END EXPORT BUTTON ---
                 ),
 
                 // Budget Edit Modal
