@@ -13,7 +13,6 @@
 <body>
     <div id="root"></div>
 
-```
 <script>
     const { useState, useEffect, useRef } = React;
     
@@ -37,7 +36,7 @@
         xmlns: 'http://www.w3.org/2000/svg'
     }, 
         React.createElement('polyline', { points: '3,6 5,6 21,6' }),
-        React.createElement('path', { d: 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' }),
+        React.createElement('path', { d: 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v2' }),
         React.createElement('line', { x1: '10', y1: '11', x2: '10', y2: '17' }),
         React.createElement('line', { x1: '14', y1: '11', x2: '14', y2: '17' })
     );
@@ -84,6 +83,40 @@
     }, 
         React.createElement('path', { d: 'M20 12c0-6.627-5.373-12-12-12S-4 5.373-4 12s5.373 12 12 12c1.657 0 3.23-.336 4.665-.942' }),
         React.createElement('path', { d: 'M7 12h5m-5-3h5' })
+    );
+
+    const Settings = (props) => React.createElement('svg', {
+        ...props,
+        fill: 'none',
+        stroke: 'currentColor',
+        viewBox: '0 0 24 24',
+        xmlns: 'http://www.w3.org/2000/svg'
+    }, 
+        React.createElement('circle', { cx: '12', cy: '12', r: '3' }),
+        React.createElement('path', { d: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z' })
+    );
+
+    const Save = (props) => React.createElement('svg', {
+        ...props,
+        fill: 'none',
+        stroke: 'currentColor',
+        viewBox: '0 0 24 24',
+        xmlns: 'http://www.w3.org/2000/svg'
+    }, 
+        React.createElement('path', { d: 'M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z' }),
+        React.createElement('polyline', { points: '17,21 17,13 7,13 7,21' }),
+        React.createElement('polyline', { points: '7,3 7,8 15,8' })
+    );
+
+    const X = (props) => React.createElement('svg', {
+        ...props,
+        fill: 'none',
+        stroke: 'currentColor',
+        viewBox: '0 0 24 24',
+        xmlns: 'http://www.w3.org/2000/svg'
+    }, 
+        React.createElement('line', { x1: '18', y1: '6', x2: '6', y2: '18' }),
+        React.createElement('line', { x1: '6', y1: '6', x2: '18', y2: '18' })
     );
 
     const TravelBudgetTracker = () => {
@@ -157,6 +190,8 @@
         const [editingId, setEditingId] = useState(null);
         const [activePerson, setActivePerson] = useState('Dan');
         const [activeTab, setActiveTab] = useState('categories');
+        const [budgetEditPerson, setBudgetEditPerson] = useState('Dan');
+        const [tempBudgets, setTempBudgets] = useState({});
         const fileInputRef = useRef(null);
         
         const [formData, setFormData] = useState({
@@ -277,6 +312,33 @@
             return Object.values(budgets.Dan).reduce((a, b) => a + b, 0) + Object.values(budgets.Tien).reduce((a, b) => a + b, 0);
         };
 
+        const openBudgetEdit = () => {
+            setTempBudgets(JSON.parse(JSON.stringify(budgets)));
+            setShowBudgetEdit(true);
+        };
+
+        const saveBudgetChanges = () => {
+            setBudgets(tempBudgets);
+            setShowBudgetEdit(false);
+            setTempBudgets({});
+        };
+
+        const cancelBudgetEdit = () => {
+            setShowBudgetEdit(false);
+            setTempBudgets({});
+        };
+
+        const updateTempBudget = (person, category, value) => {
+            const numValue = parseFloat(value) || 0;
+            setTempBudgets(prev => ({
+                ...prev,
+                [person]: {
+                    ...prev[person],
+                    [category]: numValue
+                }
+            }));
+        };
+
         const clearAllData = () => {
             if (window.confirm('Are you sure you want to clear all data? This cannot be undone.')) {
                 try {
@@ -379,14 +441,105 @@
                     )
                 ),
 
-                // Add Expense Button
-                React.createElement('div', { className: "mb-6" },
+                // Action Buttons
+                React.createElement('div', { className: "mb-6 flex flex-wrap gap-3" },
                     React.createElement('button', {
                         onClick: () => setShowAddForm(true),
                         className: "bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors"
                     },
                         React.createElement(PlusCircle, { className: "h-5 w-5" }),
                         React.createElement('span', null, "Add Expense")
+                    ),
+                    React.createElement('button', {
+                        onClick: openBudgetEdit,
+                        className: "bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors"
+                    },
+                        React.createElement(Settings, { className: "h-5 w-5" }),
+                        React.createElement('span', null, "Edit Budgets")
+                    )
+                ),
+
+                // Budget Edit Modal
+                showBudgetEdit && React.createElement('div', { 
+                    className: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4",
+                    onClick: (e) => e.target === e.currentTarget && cancelBudgetEdit()
+                },
+                    React.createElement('div', { className: "bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-auto" },
+                        React.createElement('div', { className: "sticky top-0 bg-white border-b p-6" },
+                            React.createElement('div', { className: "flex justify-between items-center" },
+                                React.createElement('h2', { className: "text-2xl font-bold text-gray-900" }, "Edit Budgets"),
+                                React.createElement('button', {
+                                    onClick: cancelBudgetEdit,
+                                    className: "text-gray-400 hover:text-gray-600"
+                                }, React.createElement(X, { className: "h-6 w-6" }))
+                            ),
+                            React.createElement('div', { className: "mt-4 flex space-x-2" },
+                                ['Dan', 'Tien'].map(person =>
+                                    React.createElement('button', {
+                                        key: person,
+                                        onClick: () => setBudgetEditPerson(person),
+                                        className: `px-4 py-2 rounded-md transition-colors ${
+                                            budgetEditPerson === person
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                        }`
+                                    }, `${person}'s Budget`)
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: "p-6" },
+                            React.createElement('div', { className: "space-y-4" },
+                                categories.map(category =>
+                                    React.createElement('div', { key: category, className: "flex items-center justify-between p-4 bg-gray-50 rounded-lg" },
+                                        React.createElement('div', null,
+                                            React.createElement('label', { className: "text-lg font-medium text-gray-900" }, category),
+                                            React.createElement('p', { className: "text-sm text-gray-500" }, 
+                                                `Current: €${budgets[budgetEditPerson][category]} (≈ $${(budgets[budgetEditPerson][category] * exchangeRate).toFixed(2)})`
+                                            )
+                                        ),
+                                        React.createElement('div', { className: "flex items-center space-x-2" },
+                                            React.createElement(Euro, { className: "h-5 w-5 text-gray-500" }),
+                                            React.createElement('input', {
+                                                type: "number",
+                                                step: "1",
+                                                min: "0",
+                                                value: tempBudgets[budgetEditPerson]?.[category] || budgets[budgetEditPerson][category],
+                                                onChange: (e) => updateTempBudget(budgetEditPerson, category, e.target.value),
+                                                className: "w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-right"
+                                            })
+                                        )
+                                    )
+                                )
+                            ),
+                            React.createElement('div', { className: "mt-6 p-4 bg-indigo-50 rounded-lg" },
+                                React.createElement('div', { className: "flex justify-between items-center" },
+                                    React.createElement('span', { className: "text-lg font-semibold text-indigo-900" }, `Total Budget for ${budgetEditPerson}:`),
+                                    React.createElement('div', { className: "text-right" },
+                                        React.createElement('div', { className: "text-lg font-bold text-indigo-900" }, 
+                                            `€${Object.values(tempBudgets[budgetEditPerson] || budgets[budgetEditPerson]).reduce((a, b) => a + b, 0)}`
+                                        ),
+                                        React.createElement('div', { className: "text-sm text-indigo-700" }, 
+                                            `≈ $${(Object.values(tempBudgets[budgetEditPerson] || budgets[budgetEditPerson]).reduce((a, b) => a + b, 0) * exchangeRate).toFixed(2)} USD`
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: "sticky bottom-0 bg-white border-t p-6" },
+                            React.createElement('div', { className: "flex space-x-3 justify-end" },
+                                React.createElement('button', {
+                                    onClick: cancelBudgetEdit,
+                                    className: "px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                                }, "Cancel"),
+                                React.createElement('button', {
+                                    onClick: saveBudgetChanges,
+                                    className: "px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md flex items-center space-x-2 transition-colors"
+                                },
+                                    React.createElement(Save, { className: "h-4 w-4" }),
+                                    React.createElement('span', null, "Save Changes")
+                                )
+                            )
+                        )
                     )
                 ),
 
@@ -539,7 +692,6 @@
     // Render the app
     ReactDOM.render(React.createElement(TravelBudgetTracker), document.getElementById('root'));
 </script>
-```
 
 </body>
 </html>
