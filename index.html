@@ -1,769 +1,641 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { PlusCircle, Trash2, Edit3, MapPin, DollarSign, Euro, Download, Upload } from 'lucide-react';
-
-const TravelBudgetTracker = () => {
-  // Load data from localStorage on component mount
-  const [expenses, setExpenses] = useState(() => {
-    try {
-      const savedExpenses = localStorage.getItem('travelBudgetExpenses');
-      return savedExpenses ? JSON.parse(savedExpenses) : [];
-    } catch (error) {
-      console.error('Error loading expenses from localStorage:', error);
-      return [];
-    }
-  });
-
-  const [budgets, setBudgets] = useState(() => {
-    try {
-      const savedBudgets = localStorage.getItem('travelBudgetBudgets');
-      return savedBudgets ? JSON.parse(savedBudgets) : {
-        Dan: {
-          Food: 500,
-          Transportation: 300,
-          Shopping: 400,
-          Accommodations: 800,
-          Activities: 250,
-          Miscellaneous: 150
-        },
-        Tien: {
-          Food: 500,
-          Transportation: 300,
-          Shopping: 400,
-          Accommodations: 800,
-          Activities: 250,
-          Miscellaneous: 150
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Budget Tracker - Portugal & France</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-      };
-    } catch (error) {
-      console.error('Error loading budgets from localStorage:', error);
-      return {
-        Dan: {
-          Food: 500,
-          Transportation: 300,
-          Shopping: 400,
-          Accommodations: 800,
-          Activities: 250,
-          Miscellaneous: 150
-        },
-        Tien: {
-          Food: 500,
-          Transportation: 300,
-          Shopping: 400,
-          Accommodations: 800,
-          Activities: 250,
-          Miscellaneous: 150
-        }
-      };
-    }
-  });
-
-  const [exchangeRate, setExchangeRate] = useState(() => {
-    try {
-      const savedRate = localStorage.getItem('travelBudgetExchangeRate');
-      return savedRate ? parseFloat(savedRate) : 1.17;
-    } catch (error) {
-      console.error('Error loading exchange rate from localStorage:', error);
-      return 1.17;
-    }
-  });
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showBudgetEdit, setShowBudgetEdit] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [activePerson, setActivePerson] = useState('Dan');
-  const [activeTab, setActiveTab] = useState('categories'); // 'categories' or 'summary'
-  const fileInputRef = useRef(null);
-  
-  const [formData, setFormData] = useState({
-    memo: '',
-    category: 'Food',
-    amount: '',
-    date: new Date().toISOString().slice(0, 16),
-    payer: 'Dan'
-  });
-
-  const categories = ['Food', 'Transportation', 'Shopping', 'Accommodations', 'Activities', 'Miscellaneous'];
-
-  // Save data to localStorage whenever state changes
-  useEffect(() => {
-    try {
-      localStorage.setItem('travelBudgetExpenses', JSON.stringify(expenses));
-    } catch (error) {
-      console.error('Error saving expenses to localStorage:', error);
-    }
-  }, [expenses]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('travelBudgetBudgets', JSON.stringify(budgets));
-    } catch (error) {
-      console.error('Error saving budgets to localStorage:', error);
-    }
-  }, [budgets]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('travelBudgetExchangeRate', exchangeRate.toString());
-    } catch (error) {
-      console.error('Error saving exchange rate to localStorage:', error);
-    }
-  }, [exchangeRate]);
-
-  // Simulate fetching exchange rate (in real app, you'd fetch from an API)
-  useEffect(() => {
-    // Using the current EUR to USD rate
-    setExchangeRate(1.17);
-  }, []);
-
-  const resetForm = () => {
-    setFormData({
-      memo: '',
-      category: 'Food',
-      amount: '',
-      date: new Date().toISOString().slice(0, 16),
-      payer: 'Dan'
-    });
-    setShowAddForm(false);
-    setEditingId(null);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.memo || !formData.amount) return;
-
-    const amount = parseFloat(formData.amount);
-    const expense = {
-      id: editingId || Date.now(),
-      memo: formData.memo,
-      category: formData.category,
-      amount: amount,
-      date: formData.date,
-      payer: formData.payer,
-      usdAmount: amount * exchangeRate,
-      // Calculate individual amounts based on payer
-      danAmount: formData.payer === 'Split' ? amount / 2 : (formData.payer === 'Dan' ? amount : 0),
-      tienAmount: formData.payer === 'Split' ? amount / 2 : (formData.payer === 'Tien' ? amount : 0)
-    };
-
-    if (editingId) {
-      setExpenses(expenses.map(exp => exp.id === editingId ? expense : exp));
-    } else {
-      setExpenses([...expenses, expense]);
-    }
-    
-    resetForm();
-  };
-
-  const deleteExpense = (id) => {
-    setExpenses(expenses.filter(exp => exp.id !== id));
-  };
-
-  const editExpense = (expense) => {
-    setFormData({
-      memo: expense.memo,
-      category: expense.category,
-      amount: expense.amount.toString(),
-      date: expense.date,
-      payer: expense.payer
-    });
-    setEditingId(expense.id);
-    setShowAddForm(true);
-  };
-
-  const getCategorySpending = (category, person) => {
-    return expenses
-      .filter(exp => exp.category === category)
-      .reduce((sum, exp) => {
-        if (person === 'Dan') return sum + exp.danAmount;
-        if (person === 'Tien') return sum + exp.tienAmount;
-        return sum + exp.amount; // Total
-      }, 0);
-  };
-
-  const getTotalSpending = (person) => {
-    return expenses.reduce((sum, exp) => {
-      if (person === 'Dan') return sum + exp.danAmount;
-      if (person === 'Tien') return sum + exp.tienAmount;
-      return sum + exp.amount; // Total
-    }, 0);
-  };
-
-  const getTotalBudget = (person) => {
-    if (person === 'Dan' || person === 'Tien') {
-      return Object.values(budgets[person]).reduce((a, b) => a + b, 0);
-    }
-    return Object.values(budgets.Dan).reduce((a, b) => a + b, 0) + Object.values(budgets.Tien).reduce((a, b) => a + b, 0);
-  };
-
-  const updateBudget = (person, category, value) => {
-    setBudgets(prev => ({
-      ...prev,
-      [person]: {
-        ...prev[person],
-        [category]: parseFloat(value) || 0
-      }
-    }));
-  };
-
-  // Clear all data function for testing/reset
-  const clearAllData = () => {
-    if (window.confirm('Are you sure you want to clear all data? This cannot be undone.')) {
-      try {
-        localStorage.removeItem('travelBudgetExpenses');
-        localStorage.removeItem('travelBudgetBudgets');
-        localStorage.removeItem('travelBudgetExchangeRate');
-        // Reset to initial state
-        setExpenses([]);
-        setBudgets({
-          Dan: {
-            Food: 500,
-            Transportation: 300,
-            Shopping: 400,
-            Accommodations: 800,
-            Activities: 250,
-            Miscellaneous: 150
-          },
-          Tien: {
-            Food: 500,
-            Transportation: 300,
-            Shopping: 400,
-            Accommodations: 800,
-            Activities: 250,
-            Miscellaneous: 150
-          }
-        });
-        setExchangeRate(1.17);
-      } catch (error) {
-        console.error('Error clearing data:', error);
-      }
-    }
-  };
-
-  // Export data to CSV
-  const exportToCSV = () => {
-    try {
-      // Create CSV content for expenses
-      const csvHeader = 'Date,Description,Category,Amount (EUR),Amount (USD),Payer,Dan Amount (EUR),Tien Amount (EUR)\n';
-      const csvRows = expenses.map(expense => {
-        const date = new Date(expense.date).toLocaleString();
-        return `"${date}","${expense.memo.replace(/"/g, '""')}","${expense.category}",${expense.amount},${expense.usdAmount.toFixed(2)},"${expense.payer}",${expense.danAmount.toFixed(2)},${expense.tienAmount.toFixed(2)}`;
-      }).join('\n');
-      
-      const csvContent = csvHeader + csvRows;
-      
-      // Create and trigger download
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `travel-budget-${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    } catch (error) {
-      console.error('Error exporting CSV:', error);
-      alert('Error exporting data. Please try again.');
-    }
-  };
-
-  // Import data from CSV
-  const importFromCSV = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const csv = e.target.result;
-        const lines = csv.split('\n');
         
-        if (lines.length < 2) {
-          alert('CSV file appears to be empty or invalid.');
-          return;
-        }
-
-        // Skip header row and parse data
-        const importedExpenses = [];
-        for (let i = 1; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
-          
-          // Parse CSV line (handling quoted strings)
-          const values = [];
-          let current = '';
-          let inQuotes = false;
-          
-          for (let j = 0; j < line.length; j++) {
-            const char = line[j];
-            if (char === '"') {
-              if (inQuotes && line[j + 1] === '"') {
-                current += '"';
-                j++; // Skip next quote
-              } else {
-                inQuotes = !inQuotes;
-              }
-            } else if (char === ',' && !inQuotes) {
-              values.push(current);
-              current = '';
-            } else {
-              current += char;
+        /* PWA-like styling */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0.5rem;
             }
-          }
-          values.push(current); // Add last value
-          
-          if (values.length >= 8) {
-            const expense = {
-              id: Date.now() + i, // Generate unique ID
-              date: new Date(values[0]).toISOString().slice(0, 16),
-              memo: values[1],
-              category: values[2],
-              amount: parseFloat(values[3]) || 0,
-              usdAmount: parseFloat(values[4]) || 0,
-              payer: values[5],
-              danAmount: parseFloat(values[6]) || 0,
-              tienAmount: parseFloat(values[7]) || 0
-            };
-            importedExpenses.push(expense);
-          }
         }
-
-        if (importedExpenses.length > 0) {
-          if (window.confirm(`Import ${importedExpenses.length} expenses? This will replace your current data.`)) {
-            setExpenses(importedExpenses);
-            alert(`Successfully imported ${importedExpenses.length} expenses!`);
-          }
-        } else {
-          alert('No valid expense data found in the CSV file.');
+        
+        /* Custom scrollbar for mobile */
+        ::-webkit-scrollbar {
+            width: 4px;
         }
-      } catch (error) {
-        console.error('Error importing CSV:', error);
-        alert('Error importing CSV file. Please check the file format and try again.');
-      }
-    };
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
     
-    reader.readAsText(file);
-    // Reset file input
-    event.target.value = '';
-  };
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        // Lucide React icons as simple SVG components
+        const PlusCircle = ({ className = "h-5 w-5" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 8v8M8 12h8"></path>
+            </svg>
+        );
+        
+        const Trash2 = ({ className = "h-4 w-4" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <polyline points="3,6 5,6 21,6"></polyline>
+                <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+        );
+        
+        const Edit3 = ({ className = "h-4 w-4" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+        );
+        
+        const MapPin = ({ className = "h-8 w-8" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+        );
+        
+        const DollarSign = ({ className = "h-8 w-8" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <line x1="12" y1="1" x2="12" y2="23"></line>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+        );
+        
+        const Euro = ({ className = "h-8 w-8" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M18.5 8.5C18.5 8.5 17 7 15 7a4 4 0 0 0-4 4 4 4 0 0 0 4 4c2 0 3.5-1.5 3.5-1.5"></path>
+                <path d="M7 10h4m-4 4h4"></path>
+            </svg>
+        );
+        
+        const Download = ({ className = "h-4 w-4" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7,10 12,15 17,10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+        );
+        
+        const Upload = ({ className = "h-4 w-4" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17,8 12,3 7,8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+        );
 
-  // Trigger file input
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
+        const TravelBudgetTracker = () => {
+            // Load data from localStorage on component mount
+            const [expenses, setExpenses] = useState(() => {
+                try {
+                    const savedExpenses = localStorage.getItem('travelBudgetExpenses');
+                    return savedExpenses ? JSON.parse(savedExpenses) : [];
+                } catch (error) {
+                    console.error('Error loading expenses from localStorage:', error);
+                    return [];
+                }
+            });
 
-  const getProgressColor = (spent, budget) => {
-    const percentage = (spent / budget) * 100;
-    if (percentage >= 90) return 'bg-red-500';
-    if (percentage >= 75) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
+            const [budgets, setBudgets] = useState(() => {
+                try {
+                    const savedBudgets = localStorage.getItem('travelBudgetBudgets');
+                    return savedBudgets ? JSON.parse(savedBudgets) : {
+                        Dan: {
+                            Food: 500,
+                            Transportation: 300,
+                            Shopping: 400,
+                            Accommodations: 800,
+                            Activities: 250,
+                            Miscellaneous: 150
+                        },
+                        Tien: {
+                            Food: 500,
+                            Transportation: 300,
+                            Shopping: 400,
+                            Accommodations: 800,
+                            Activities: 250,
+                            Miscellaneous: 150
+                        }
+                    };
+                } catch (error) {
+                    console.error('Error loading budgets from localStorage:', error);
+                    return {
+                        Dan: {
+                            Food: 500,
+                            Transportation: 300,
+                            Shopping: 400,
+                            Accommodations: 800,
+                            Activities: 250,
+                            Miscellaneous: 150
+                        },
+                        Tien: {
+                            Food: 500,
+                            Transportation: 300,
+                            Shopping: 400,
+                            Accommodations: 800,
+                            Activities: 250,
+                            Miscellaneous: 150
+                        }
+                    };
+                }
+            });
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <MapPin className="h-8 w-8 text-indigo-600" />
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Travel Budget Tracker</h1>
-                <p className="text-gray-600">Portugal & France Adventure - Dan & Tien</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-500">Exchange Rate</div>
-              <div className="text-lg font-semibold">1 EUR = ${exchangeRate.toFixed(2)} USD</div>
-            </div>
-          </div>
-          
-          {/* Person Toggle */}
-          <div className="mt-4 flex justify-center">
-            <div className="bg-gray-100 rounded-lg p-1 flex">
-              {['Dan', 'Tien', 'Combined'].map(person => (
-                <button
-                  key={person}
-                  onClick={() => setActivePerson(person)}
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    activePerson === person
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  {person}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Add Expense Button */}
-        <div className="mb-6 flex flex-wrap gap-3 items-center justify-between">
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors"
-          >
-            <PlusCircle className="h-5 w-5" />
-            <span>Add Expense</span>
-          </button>
-          
-          <div className="flex flex-wrap gap-2">
-            {/* Export CSV Button */}
-            <button
-              onClick={exportToCSV}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 text-sm transition-colors"
-            >
-              <Download className="h-4 w-4" />
-              <span>Export CSV</span>
-            </button>
+            const [exchangeRate, setExchangeRate] = useState(() => {
+                try {
+                    const savedRate = localStorage.getItem('travelBudgetExchangeRate');
+                    return savedRate ? parseFloat(savedRate) : 1.17;
+                } catch (error) {
+                    console.error('Error loading exchange rate from localStorage:', error);
+                    return 1.17;
+                }
+            });
             
-            {/* Import CSV Button */}
-            <button
-              onClick={triggerFileInput}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 text-sm transition-colors"
-            >
-              <Upload className="h-4 w-4" />
-              <span>Import CSV</span>
-            </button>
+            const [showAddForm, setShowAddForm] = useState(false);
+            const [showBudgetEdit, setShowBudgetEdit] = useState(false);
+            const [editingId, setEditingId] = useState(null);
+            const [activePerson, setActivePerson] = useState('Dan');
+            const [activeTab, setActiveTab] = useState('categories');
+            const fileInputRef = useRef(null);
             
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              onChange={importFromCSV}
-              style={{ display: 'none' }}
-            />
-            
-            {/* Clear Data Button */}
-            <button
-              onClick={clearAllData}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-            >
-              Clear All Data
-            </button>
-          </div>
-        </div>
+            const [formData, setFormData] = useState({
+                memo: '',
+                category: 'Food',
+                amount: '',
+                date: new Date().toISOString().slice(0, 16),
+                payer: 'Dan'
+            });
 
-        {/* Add/Edit Expense Form */}
-        {showAddForm && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">{editingId ? 'Edit Expense' : 'Add New Expense'}</h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <input
-                    type="text"
-                    value={formData.memo}
-                    onChange={(e) => setFormData({...formData, memo: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="e.g., Dinner at local restaurant"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({...formData, category: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Who's paying?</label>
-                  <select
-                    value={formData.payer}
-                    onChange={(e) => setFormData({...formData, payer: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="Dan">Dan</option>
-                    <option value="Tien">Tien</option>
-                    <option value="Split">Split (50/50)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount (EUR)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="0.00"
-                    required
-                  />
-                  {formData.amount && (
-                    <div className="text-sm text-gray-500 mt-1">
-                      <p>≈ ${(parseFloat(formData.amount || 0) * exchangeRate).toFixed(2)} USD</p>
-                      {formData.payer === 'Split' && (
-                        <p>€{(parseFloat(formData.amount || 0) / 2).toFixed(2)} each</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-              <div className="flex space-x-3">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleSubmit(e);
-                  }}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition-colors"
-                >
-                  {editingId ? 'Update Expense' : 'Add Expense'}
-                </button>
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+            const categories = ['Food', 'Transportation', 'Shopping', 'Accommodations', 'Activities', 'Miscellaneous'];
 
-        {/* Tab Navigation */}
-        <div className="mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab('categories')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'categories'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Category Dashboard
-              </button>
-              <button
-                onClick={() => setActiveTab('summary')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'summary'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Summary Overview
-              </button>
-            </nav>
-          </div>
-        </div>
+            // Save data to localStorage whenever state changes
+            useEffect(() => {
+                try {
+                    localStorage.setItem('travelBudgetExpenses', JSON.stringify(expenses));
+                } catch (error) {
+                    console.error('Error saving expenses to localStorage:', error);
+                }
+            }, [expenses]);
 
-        {/* Tab Content */}
-        {activeTab === 'summary' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">
-                    {activePerson === 'Combined' ? 'Total Spent' : `${activePerson}'s Spending`}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">€{getTotalSpending(activePerson === 'Combined' ? null : activePerson).toFixed(2)}</p>
-                  <p className="text-sm text-gray-600">${(getTotalSpending(activePerson === 'Combined' ? null : activePerson) * exchangeRate).toFixed(2)} USD</p>
-                </div>
-                <Euro className="h-8 w-8 text-indigo-600" />
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">
-                    {activePerson === 'Combined' ? 'Total Budget' : `${activePerson}'s Budget`}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">€{getTotalBudget(activePerson === 'Combined' ? null : activePerson)}</p>
-                  <p className="text-sm text-gray-600">${(getTotalBudget(activePerson === 'Combined' ? null : activePerson) * exchangeRate).toFixed(2)} USD</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-green-600" />
-              </div>
-            </div>
+            useEffect(() => {
+                try {
+                    localStorage.setItem('travelBudgetBudgets', JSON.stringify(budgets));
+                } catch (error) {
+                    console.error('Error saving budgets to localStorage:', error);
+                }
+            }, [budgets]);
 
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Remaining</p>
-                  <p className="text-2xl font-bold text-gray-900">€{(getTotalBudget(activePerson === 'Combined' ? null : activePerson) - getTotalSpending(activePerson === 'Combined' ? null : activePerson)).toFixed(2)}</p>
-                  <p className="text-sm text-gray-600">${((getTotalBudget(activePerson === 'Combined' ? null : activePerson) - getTotalSpending(activePerson === 'Combined' ? null : activePerson)) * exchangeRate).toFixed(2)} USD</p>
-                </div>
-                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <span className="text-blue-600 font-bold">€</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+            useEffect(() => {
+                try {
+                    localStorage.setItem('travelBudgetExchangeRate', exchangeRate.toString());
+                } catch (error) {
+                    console.error('Error saving exchange rate to localStorage:', error);
+                }
+            }, [exchangeRate]);
 
-        {/* Budget Categories Dashboard */}
-        {activeTab === 'categories' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            {categories.map(category => {
-              let spent, budget;
-              
-              if (activePerson === 'Combined') {
-                spent = getCategorySpending(category, 'Dan') + getCategorySpending(category, 'Tien');
-                budget = budgets.Dan[category] + budgets.Tien[category];
-              } else {
-                spent = getCategorySpending(category, activePerson);
-                budget = budgets[activePerson][category];
-              }
-              
-              const percentage = (spent / budget) * 100;
-              
-              return (
-                <div key={category} className="bg-white rounded-lg shadow-lg p-6">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900">{category}</h3>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">€{spent.toFixed(2)} / €{budget}</p>
-                      <p className="text-xs text-gray-400">${(spent * exchangeRate).toFixed(2)} USD</p>
-                      {activePerson === 'Combined' && (
-                        <div className="text-xs text-gray-400 mt-1">
-                          <div>Dan: €{getCategorySpending(category, 'Dan').toFixed(2)}</div>
-                          <div>Tien: €{getCategorySpending(category, 'Tien').toFixed(2)}</div>
+            const resetForm = () => {
+                setFormData({
+                    memo: '',
+                    category: 'Food',
+                    amount: '',
+                    date: new Date().toISOString().slice(0, 16),
+                    payer: 'Dan'
+                });
+                setShowAddForm(false);
+                setEditingId(null);
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!formData.memo || !formData.amount) return;
+
+                const amount = parseFloat(formData.amount);
+                const expense = {
+                    id: editingId || Date.now(),
+                    memo: formData.memo,
+                    category: formData.category,
+                    amount: amount,
+                    date: formData.date,
+                    payer: formData.payer,
+                    usdAmount: amount * exchangeRate,
+                    danAmount: formData.payer === 'Split' ? amount / 2 : (formData.payer === 'Dan' ? amount : 0),
+                    tienAmount: formData.payer === 'Split' ? amount / 2 : (formData.payer === 'Tien' ? amount : 0)
+                };
+
+                if (editingId) {
+                    setExpenses(expenses.map(exp => exp.id === editingId ? expense : exp));
+                } else {
+                    setExpenses([...expenses, expense]);
+                }
+                
+                resetForm();
+            };
+
+            const deleteExpense = (id) => {
+                setExpenses(expenses.filter(exp => exp.id !== id));
+            };
+
+            const editExpense = (expense) => {
+                setFormData({
+                    memo: expense.memo,
+                    category: expense.category,
+                    amount: expense.amount.toString(),
+                    date: expense.date,
+                    payer: expense.payer
+                });
+                setEditingId(expense.id);
+                setShowAddForm(true);
+            };
+
+            const getCategorySpending = (category, person) => {
+                return expenses
+                    .filter(exp => exp.category === category)
+                    .reduce((sum, exp) => {
+                        if (person === 'Dan') return sum + exp.danAmount;
+                        if (person === 'Tien') return sum + exp.tienAmount;
+                        return sum + exp.amount;
+                    }, 0);
+            };
+
+            const getTotalSpending = (person) => {
+                return expenses.reduce((sum, exp) => {
+                    if (person === 'Dan') return sum + exp.danAmount;
+                    if (person === 'Tien') return sum + exp.tienAmount;
+                    return sum + exp.amount;
+                }, 0);
+            };
+
+            const getTotalBudget = (person) => {
+                if (person === 'Dan' || person === 'Tien') {
+                    return Object.values(budgets[person]).reduce((a, b) => a + b, 0);
+                }
+                return Object.values(budgets.Dan).reduce((a, b) => a + b, 0) + Object.values(budgets.Tien).reduce((a, b) => a + b, 0);
+            };
+
+            const updateBudget = (person, category, value) => {
+                setBudgets(prev => ({
+                    ...prev,
+                    [person]: {
+                        ...prev[person],
+                        [category]: parseFloat(value) || 0
+                    }
+                }));
+            };
+
+            const getProgressColor = (spent, budget) => {
+                const percentage = (spent / budget) * 100;
+                if (percentage >= 90) return 'bg-red-500';
+                if (percentage >= 75) return 'bg-yellow-500';
+                return 'bg-green-500';
+            };
+
+            // Clear all data function for testing/reset
+            const clearAllData = () => {
+                if (window.confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                    try {
+                        localStorage.removeItem('travelBudgetExpenses');
+                        localStorage.removeItem('travelBudgetBudgets');
+                        localStorage.removeItem('travelBudgetExchangeRate');
+                        setExpenses([]);
+                        setBudgets({
+                            Dan: {
+                                Food: 500,
+                                Transportation: 300,
+                                Shopping: 400,
+                                Accommodations: 800,
+                                Activities: 250,
+                                Miscellaneous: 150
+                            },
+                            Tien: {
+                                Food: 500,
+                                Transportation: 300,
+                                Shopping: 400,
+                                Accommodations: 800,
+                                Activities: 250,
+                                Miscellaneous: 150
+                            }
+                        });
+                        setExchangeRate(1.17);
+                    } catch (error) {
+                        console.error('Error clearing data:', error);
+                    }
+                }
+            };
+
+            // Export data to CSV
+            const exportToCSV = () => {
+                try {
+                    const csvHeader = 'Date,Description,Category,Amount (EUR),Amount (USD),Payer,Dan Amount (EUR),Tien Amount (EUR)\n';
+                    const csvRows = expenses.map(expense => {
+                        const date = new Date(expense.date).toLocaleString();
+                        return `"${date}","${expense.memo.replace(/"/g, '""')}","${expense.category}",${expense.amount},${expense.usdAmount.toFixed(2)},"${expense.payer}",${expense.danAmount.toFixed(2)},${expense.tienAmount.toFixed(2)}`;
+                    }).join('\n');
+                    
+                    const csvContent = csvHeader + csvRows;
+                    
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    if (link.download !== undefined) {
+                        const url = URL.createObjectURL(blob);
+                        link.setAttribute('href', url);
+                        link.setAttribute('download', `travel-budget-${new Date().toISOString().split('T')[0]}.csv`);
+                        link.style.visibility = 'hidden';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+                } catch (error) {
+                    console.error('Error exporting CSV:', error);
+                    alert('Error exporting data. Please try again.');
+                }
+            };
+
+            // Import data from CSV
+            const importFromCSV = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const csv = e.target.result;
+                        const lines = csv.split('\n');
+                        
+                        if (lines.length < 2) {
+                            alert('CSV file appears to be empty or invalid.');
+                            return;
+                        }
+
+                        const importedExpenses = [];
+                        for (let i = 1; i < lines.length; i++) {
+                            const line = lines[i].trim();
+                            if (!line) continue;
+                            
+                            const values = [];
+                            let current = '';
+                            let inQuotes = false;
+                            
+                            for (let j = 0; j < line.length; j++) {
+                                const char = line[j];
+                                if (char === '"') {
+                                    if (inQuotes && line[j + 1] === '"') {
+                                        current += '"';
+                                        j++;
+                                    } else {
+                                        inQuotes = !inQuotes;
+                                    }
+                                } else if (char === ',' && !inQuotes) {
+                                    values.push(current);
+                                    current = '';
+                                } else {
+                                    current += char;
+                                }
+                            }
+                            values.push(current);
+                            
+                            if (values.length >= 8) {
+                                const expense = {
+                                    id: Date.now() + i,
+                                    date: new Date(values[0]).toISOString().slice(0, 16),
+                                    memo: values[1],
+                                    category: values[2],
+                                    amount: parseFloat(values[3]) || 0,
+                                    usdAmount: parseFloat(values[4]) || 0,
+                                    payer: values[5],
+                                    danAmount: parseFloat(values[6]) || 0,
+                                    tienAmount: parseFloat(values[7]) || 0
+                                };
+                                importedExpenses.push(expense);
+                            }
+                        }
+
+                        if (importedExpenses.length > 0) {
+                            if (window.confirm(`Import ${importedExpenses.length} expenses? This will replace your current data.`)) {
+                                setExpenses(importedExpenses);
+                                alert(`Successfully imported ${importedExpenses.length} expenses!`);
+                            }
+                        } else {
+                            alert('No valid expense data found in the CSV file.');
+                        }
+                    } catch (error) {
+                        console.error('Error importing CSV:', error);
+                        alert('Error importing CSV file. Please check the file format and try again.');
+                    }
+                };
+                
+                reader.readAsText(file);
+                event.target.value = '';
+            };
+
+            const triggerFileInput = () => {
+                fileInputRef.current?.click();
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+                    <div className="max-w-4xl mx-auto">
+                        {/* Header */}
+                        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                    <MapPin className="h-8 w-8 text-indigo-600" />
+                                    <div>
+                                        <h1 className="text-3xl font-bold text-gray-900">Travel Budget Tracker</h1>
+                                        <p className="text-gray-600">Portugal & France Adventure - Dan & Tien</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-sm text-gray-500">Exchange Rate</div>
+                                    <div className="text-lg font-semibold">1 EUR = ${exchangeRate.toFixed(2)} USD</div>
+                                </div>
+                            </div>
+                            
+                            {/* Person Toggle */}
+                            <div className="mt-4 flex justify-center">
+                                <div className="bg-gray-100 rounded-lg p-1 flex">
+                                    {['Dan', 'Tien', 'Combined'].map(person => (
+                                        <button
+                                            key={person}
+                                            onClick={() => setActivePerson(person)}
+                                            className={`px-4 py-2 rounded-md transition-colors ${
+                                                activePerson === person
+                                                    ? 'bg-indigo-600 text-white'
+                                                    : 'text-gray-600 hover:text-gray-900'
+                                            }`}
+                                        >
+                                            {person}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                    <div
-                      className={`h-3 rounded-full transition-all duration-300 ${getProgressColor(spent, budget)}`}
-                      style={{ width: `${Math.min(percentage, 100)}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    {percentage.toFixed(1)}% used
-                    {percentage > 100 && (
-                      <span className="text-red-600 font-semibold ml-2">Over budget!</span>
-                    )}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        )}
 
-        {/* Recent Expenses */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Recent Expenses</h2>
-          {expenses.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No expenses added yet. Start tracking your travel spending!</p>
-          ) : (
-            <div className="space-y-3">
-              {expenses.sort((a, b) => new Date(b.date) - new Date(a.date)).map(expense => (
-                <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                      <div>
-                        <p className="font-medium text-gray-900">{expense.memo}</p>
-                        <p className="text-sm text-gray-500">
-                          {expense.category} • {expense.payer === 'Split' ? 'Split expense' : `${expense.payer}'s expense`} • {new Date(expense.date).toLocaleDateString()} {new Date(expense.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">€{expense.amount.toFixed(2)}</p>
-                      <p className="text-sm text-gray-500">${expense.usdAmount.toFixed(2)}</p>
-                      {expense.payer === 'Split' && (
-                        <p className="text-xs text-gray-400">€{(expense.amount / 2).toFixed(2)} each</p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => editExpense(expense)}
-                      className="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
-                    >
-                      <Edit3 className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => deleteExpense(expense.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                        {/* Add Expense Button */}
+                        <div className="mb-6 flex flex-wrap gap-3 items-center justify-between">
+                            <button
+                                onClick={() => setShowAddForm(true)}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors"
+                            >
+                                <PlusCircle className="h-5 w-5" />
+                                <span>Add Expense</span>
+                            </button>
+                            
+                            <div className="flex flex-wrap gap-2">
+                                {/* Export CSV Button */}
+                                <button
+                                    onClick={exportToCSV}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 text-sm transition-colors"
+                                >
+                                    <Download className="h-4 w-4" />
+                                    <span>Export CSV</span>
+                                </button>
+                                
+                                {/* Import CSV Button */}
+                                <button
+                                    onClick={triggerFileInput}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 text-sm transition-colors"
+                                >
+                                    <Upload className="h-4 w-4" />
+                                    <span>Import CSV</span>
+                                </button>
+                                
+                                {/* Hidden file input */}
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={importFromCSV}
+                                    style={{ display: 'none' }}
+                                />
+                                
+                                {/* Clear Data Button */}
+                                <button
+                                    onClick={clearAllData}
+                                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                                >
+                                    Clear All Data
+                                </button>
+                            </div>
+                        </div>
 
-        {/* Edit Budgets Button */}
-        <div className="mb-6">
-          <button
-            onClick={() => setShowBudgetEdit(true)}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors"
-          >
-            <Edit3 className="h-5 w-5" />
-            <span>Edit Budgets</span>
-          </button>
-        </div>
+                        {/* Add/Edit Expense Form */}
+                        {showAddForm && (
+                            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                                <h2 className="text-xl font-semibold mb-4">{editingId ? 'Edit Expense' : 'Add New Expense'}</h2>
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                            <input
+                                                type="text"
+                                                value={formData.memo}
+                                                onChange={(e) => setFormData({...formData, memo: e.target.value})}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                placeholder="e.g., Dinner at local restaurant"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                            <select
+                                                value={formData.category}
+                                                onChange={(e) => setFormData({...formData, category: e.target.value})}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            >
+                                                {categories.map(cat => (
+                                                    <option key={cat} value={cat}>{cat}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Who's paying?</label>
+                                            <select
+                                                value={formData.payer}
+                                                onChange={(e) => setFormData({...formData, payer: e.target.value})}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            >
+                                                <option value="Dan">Dan</option>
+                                                <option value="Tien">Tien</option>
+                                                <option value="Split">Split (50/50)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Amount (EUR)</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={formData.amount}
+                                                onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                placeholder="0.00"
+                                                required
+                                            />
+                                            {formData.amount && (
+                                                <div className="text-sm text-gray-500 mt-1">
+                                                    <p>≈ ${(parseFloat(formData.amount || 0) * exchangeRate).toFixed(2)} USD</p>
+                                                    {formData.payer === 'Split' && (
+                                                        <p>€{(parseFloat(formData.amount || 0) / 2).toFixed(2)} each</p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time</label>
+                                            <input
+                                                type="datetime-local"
+                                                value={formData.date}
+                                                onChange={(e) => setFormData({...formData, date: e.target.value})}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex space-x-3">
+                                        <button
+                                            type="button"
+                                            onClick={handleSubmit}
+                                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition-colors"
+                                        >
+                                            {editingId ? 'Update Expense' : 'Add Expense'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={resetForm}
+                                            className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
-        {/* Budget Edit Form */}
-        {showBudgetEdit && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Edit Budgets</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {['Dan', 'Tien'].map(person => (
-                <div key={person} className="space-y-4">
-                  <h3 className="text-lg font-medium text-gray-900">{person}'s Budget</h3>
-                  {categories.map(category => (
-                    <div key={category} className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-gray-700">{category}</label>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-500">€</span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={budgets[person][category]}
-                          onChange={(e) => updateBudget(person, category, e.target.value)}
-                          className="w-24 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                  <div className="pt-2 border-t">
-                    <div className="flex justify-between text-sm font-semibold">
-                      <span>Total:</span>
-                      <span>€{Object.values(budgets[person]).reduce((a, b) => a + b, 0).toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => setShowBudgetEdit(false)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition-colors"
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default TravelBudgetTracker;
+                        {/* Tab Navigation */}
+                        <div className="mb-6">
+                            <div className="border-b border-gray-200">
+                                <nav className="-mb-px flex space-x-8">
+                                    <button
+                                        onClick={() => setActiveTab('categories')}
+                                        className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                                            activeTab === 'categories'
+                                                ? 'border-indigo-500 text-indigo-600'
+                                                : 'border-transparent
